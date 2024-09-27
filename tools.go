@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const randomStringSource = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXWYZ0123456789_+$%@#"
+const randomStringSource = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXWYZ0123456789_+"
 
 // Tools is the type used to instantiate this module. Any variable of this type will have access to all the methods with the receiver *Tools.
 type Tools struct {
@@ -37,6 +37,8 @@ type UploadedFile struct {
 	FileSize         int64
 }
 
+// UploadOneFile uploads a single file from the provided HTTP request, storing it in the specified directory.
+// If the optional rename argument is true or not provided, the file will be renamed.
 func (t *Tools) UploadOneFile(r *http.Request, uploadDir string, rename ...bool) (*UploadedFile, error) {
 	renameFile := true
 	if len(rename) > 0 {
