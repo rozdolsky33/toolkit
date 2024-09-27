@@ -13,6 +13,7 @@ import (
 	"testing"
 )
 
+// TestTools_RandomString verifies that the RandomString method returns a string of the correct length.
 func TestTools_RandomString(t *testing.T) {
 	var testTools Tools
 	s := testTools.RandomString(10)
@@ -33,6 +34,7 @@ var uploadTests = []struct {
 	{name: "not allowed", allowedTypes: []string{"image/jpeg"}, renameFile: false, errorExpected: true},
 }
 
+// TestTools_UploadFiles tests the file upload functionality via multipart form-data with various scenarios and configurations.
 func TestTools_UploadFiles(t *testing.T) {
 	for _, e := range uploadTests {
 		//set up a pipe to avoid buffering
@@ -92,6 +94,7 @@ func TestTools_UploadFiles(t *testing.T) {
 	}
 }
 
+// TestTools_UploadOneFile tests the UploadOneFile method to ensure a file can be uploaded, stored, and verified correctly.
 func TestTools_UploadOneFile(t *testing.T) {
 	//set up a pipe to avoid buffering
 	pr, pw := io.Pipe()
@@ -156,5 +159,34 @@ func TestTools_CreateDirIfNotExist(t *testing.T) {
 	}
 
 	_ = os.Remove(fmt.Sprintf("./testdata/myDir"))
+
+}
+
+var slugTests = []struct {
+	name          string
+	s             string
+	expected      string
+	errorExpected bool
+}{
+	{name: "valid string", s: "Hello World", expected: "hello-world", errorExpected: false},
+	{name: "empty string", s: "", expected: "", errorExpected: true},
+	{name: "complex string", s: "Now is the time for all GOOD men! + fish & such &^123", expected: "now-is-the-time-for-all-good-men-fish-such-123", errorExpected: false},
+	{name: " japanese string", s: "こんにちは世界", expected: "", errorExpected: true},
+	{name: " japanese string and roman characters", s: "hello world こんにちは世界", expected: "hello-world", errorExpected: false},
+}
+
+func TestTools_Slugify(t *testing.T) {
+	var testTools Tools
+
+	for _, test := range slugTests {
+		slug, err := testTools.Slugify(test.s)
+		if err != nil && !test.errorExpected {
+			t.Errorf("%s: error received but none expected: %s", test.name, err.Error())
+		}
+
+		if !test.errorExpected && slug != test.expected {
+			t.Errorf("%s: wrong slug retrned; expected %s but got %s", test.name, test.expected, slug)
+		}
+	}
 
 }

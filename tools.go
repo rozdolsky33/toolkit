@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
+// randomStringSource defines the character set used for generating random strings.
 const randomStringSource = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXWYZ0123456789_+"
 
 // Tools is the type used to instantiate this module. Any variable of this type will have access to all the methods with the receiver *Tools.
@@ -54,6 +56,8 @@ func (t *Tools) UploadOneFile(r *http.Request, uploadDir string, rename ...bool)
 	return files[0], nil
 }
 
+// UploadFiles uploads multiple files from the provided HTTP request, storing them in the specified directory.
+// If the optional rename argument is true or not provided, the files will be renamed.
 func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) ([]*UploadedFile, error) {
 	renameFile := true
 	if len(rename) > 0 {
@@ -150,4 +154,20 @@ func (t *Tools) CreateDirIfNotExist(dir string) error {
 		}
 	}
 	return nil
+}
+
+// Slugify transforms an input string into a URL-friendly slug by replacing non-alphanumeric characters with hyphens.
+func (t *Tools) Slugify(s string) (string, error) {
+	if s == "" {
+		return "", errors.New("empty string not permitted")
+	}
+	var regEx = regexp.MustCompile(`[^a-z\d]+`)
+
+	slug := strings.Trim(regEx.ReplaceAllString(strings.ToLower(s), "-"), "-")
+
+	if len(slug) == 0 {
+		return "", errors.New("after removing characters, slug is zero length")
+	}
+
+	return slug, nil
 }
