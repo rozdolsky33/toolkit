@@ -1,5 +1,7 @@
 # Toolkit Package
 
+[![CI Build](https://github.com/rozdolsky33/toolkit/actions/workflows/go.yml/badge.svg?token=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)](https://github.com/Testing-By-Specification/testspec-java/actions/workflows/windows_macos_build.yml)
+
 This toolkit package provides a set of utilities designed for the Go programming language to handle common tasks like generating random strings and handling file uploads in web applications.
 
 ## Features
