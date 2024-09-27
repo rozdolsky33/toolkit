@@ -32,9 +32,24 @@ func (t *Tools) RandomString(n int) string {
 
 // UploadedFile is a struct used to save information about an uploaded file
 type UploadedFile struct {
-	NameFileName     string
+	NewFileName      string
 	OriginalFileName string
 	FileSize         int64
+}
+
+func (t *Tools) UploadOneFile(r *http.Request, uploadDir string, rename ...bool) (*UploadedFile, error) {
+	renameFile := true
+	if len(rename) > 0 {
+		renameFile = rename[0]
+	}
+
+	files, err := t.UploadFiles(r, uploadDir, renameFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return files[0], nil
 }
 
 func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) ([]*UploadedFile, error) {
@@ -88,13 +103,16 @@ func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) (
 					return nil, err
 				}
 				if renameFile {
-					uploadedFile.NameFileName = fmt.Sprintf("%s%s", t.RandomString(25), filepath.Ext(hdr.Filename))
+					uploadedFile.NewFileName = fmt.Sprintf("%s%s", t.RandomString(25), filepath.Ext(hdr.Filename))
 				} else {
-					uploadedFile.NameFileName = hdr.Filename
+					uploadedFile.NewFileName = hdr.Filename
 				}
+
+				uploadedFile.OriginalFileName = hdr.Filename
+
 				var outFile *os.File
 				defer outFile.Close()
-				if outFile, err = os.Create(filepath.Join(uploadDir, uploadedFile.NameFileName)); err != nil {
+				if outFile, err = os.Create(filepath.Join(uploadDir, uploadedFile.NewFileName)); err != nil {
 					return nil, err
 				} else {
 					fileSize, err := io.Copy(outFile, infile)
