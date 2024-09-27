@@ -4,15 +4,24 @@ This toolkit package provides a set of utilities designed for the Go programming
 
 ## Features
 
-- Generate random strings of specified length.
-- Upload files via HTTP requests with optional renaming and file type validation.
+The included tools are:
+
+- [ ] Read JSON
+- [ ] Write JSON
+- [ ] Produce a JSON encoded error response
+- [X] Upload files via HTTP requests with optional renaming and file type validation.
+- [ ] Download a static file
+- [X] Get a random string of length n
+- [ ] Post JSON to a remote service
+- [ ] Create a directory, including all parent directories, if it does not already exist
+- [ ] Create a URL safe slug from a string
 
 ## Installation
 
 To install the package, use the following command:
 
 ```sh
-go get github.com/yourusername/toolkit
+go get github.com/rozdolsky33/toolkit
 ```
 
 ## Usage
@@ -22,7 +31,7 @@ go get github.com/yourusername/toolkit
 Before using the package, import it in your Go project:
 
 ```go
-import "github.com/yourusername/toolkit"
+import "github.com/rozdolsky33/toolkit"
 ```
 
 ### Initializing the Tools
@@ -31,7 +40,7 @@ Create an instance of the `Tools` type to access its methods:
 
 ```go
 t := toolkit.Tools{
-    MaxFileSize:      1024 * 1024 * 10, // 10MB
+    MaxFileSize:      1024 * 1024 * 1024, // 1 GB
     AllowedFileTypes: []string{"image/jpeg", "image/png"},
 }
 ```
@@ -111,3 +120,25 @@ func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) (
 - `r *http.Request`: The HTTP request object.
 - `uploadDir string`: Directory path where files will be uploaded.
 - `rename ...bool`: Optional boolean to specify whether to rename uploaded files.
+
+# MIT License
+
+### Copyright (c) 2024 Volodymyr Rozdolsky
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
