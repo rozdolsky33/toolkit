@@ -1,7 +1,6 @@
 # Toolkit Package
 
 [![CI Build](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml/badge.svg)](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml)
-
 [![Coverage Status](https://coveralls.io/repos/github/rozdolsky33/toolkit/badge.svg?branch=main)](https://coveralls.io/github/rozdolsky33/toolkit?branch=main)
 
 This toolkit package provides a set of utilities designed for the Go programming language to handle common tasks like generating random strings and handling file uploads in web applications.
