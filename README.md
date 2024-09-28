@@ -12,7 +12,7 @@ The included tools are:
 - [ ] Write JSON
 - [ ] Produce a JSON encoded error response
 - [X] Upload files via HTTP requests with optional renaming and file type validation.
-- [ ] Download a static file
+- [X] Download a static file
 - [X] Get a random string of length n
 - [ ] Post JSON to a remote service
 - [X] Create a directory, including all parent directories, if it does not already exist
