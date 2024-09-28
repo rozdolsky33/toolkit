@@ -2,6 +2,8 @@
 
 [![CI Build](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml/badge.svg)](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml)
 
+
+
 This toolkit package provides a set of utilities designed for the Go programming language to handle common tasks like generating random strings and handling file uploads in web applications.
 
 ## Features
