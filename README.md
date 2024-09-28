@@ -11,13 +11,13 @@ The included tools are:
 
 - [X] Read JSON
 - [X] Write JSON
-- [ ] Produce a JSON encoded error response
+- [X] Produce a JSON encoded error response
 - [X] Upload files via HTTP requests with optional renaming and file type validation.
 - [X] Download a static file
 - [X] Get a random string of length n
 - [X] Post JSON to a remote service
 - [X] Create a directory, including all parent directories, if it does not already exist
-- [X] Create a URL safe slug from a string
+- [X] Create a URL-safe slug from a string
 
 ## Installation
 
@@ -42,7 +42,7 @@ import "github.com/rozdolsky33/toolkit"
 Create an instance of the `Tools` type to access its methods:
 
 ```go
-t := toolkit.Tools{
+tools := toolkit.Tools{
     MaxFileSize:      1024 * 1024 * 1024, // 1 GB
     AllowedFileTypes: []string{"image/jpeg", "image/png"},
 }
@@ -53,7 +53,7 @@ t := toolkit.Tools{
 Use the `RandomString` method to generate a random string of specified length:
 
 ```go
-randomStr := t.RandomString(16)
+randomStr := tools.RandomString(16)
 fmt.Println("Random String:", randomStr)
 ```
 
@@ -65,7 +65,7 @@ Use the `UploadFiles` method to handle file uploads from HTTP requests. You can 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
     uploadDir := "./uploads"
 
-    uploadedFiles, err := t.UploadFiles(r, uploadDir, true)
+    uploadedFiles, err := tools.UploadFiles(r, uploadDir, true)
     if err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
@@ -73,7 +73,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
     for _, file := range uploadedFiles {
         fmt.Fprintf(w, "Uploaded File: %s (original: %s), Size: %d bytes\n",
-            file.NameFileName, file.OriginalFileName, file.FileSize)
+            file.NewFileName, file.OriginalFileName, file.FileSize)
     }
 }
 ```
@@ -89,18 +89,28 @@ http.ListenAndServe(":8080, nil)
 
 ### Tools
 
-The `Tools` struct is used to instantiate the toolkit. This struct holds configuration for file uploads.
+The `Tools` struct is used to instantiate the toolkit. This struct holds configuration for file uploads and JSON operations.
 
 - `MaxFileSize int`: Maximum allowed file size for uploads (in bytes).
 - `AllowedFileTypes []string`: List of allowed file MIME types for validation.
+- `MaxJSONSize int`: Maximum allowed JSON size in bytes.
+- `AllowUnknownFields bool`: Flag to allow unknown JSON fields.
 
 ### UploadedFile
 
 The `UploadedFile` struct holds information about the uploaded files.
 
-- `NameFileName string`: The name of the file saved on the server.
+- `NewFileName string`: The name of the file saved on the server.
 - `OriginalFileName string`: The original name of the uploaded file.
 - `FileSize int64`: The size of the uploaded file in bytes.
+
+### JSONResponse
+
+The `JSONResponse` struct is used to format JSON responses.
+
+- `Error bool`: Indicates if the response is an error.
+- `Message string`: The message to be included in the response.
+- `Data interface{}`: Optional data payload.
 
 ## Methods
 
@@ -123,6 +133,89 @@ func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) (
 - `r *http.Request`: The HTTP request object.
 - `uploadDir string`: Directory path where files will be uploaded.
 - `rename ...bool`: Optional boolean to specify whether to rename uploaded files.
+
+### `CreateDirIfNotExist`
+
+Creates a directory if it does not exist.
+
+```go
+func (t *Tools) CreateDirIfNotExist(dir string) error
+```
+
+- `dir string`: The directory path.
+
+### `Slugify`
+
+Transforms an input string into a URL-friendly slug.
+
+```go
+func (t *Tools) Slugify(s string) (string, error)
+```
+
+- `s string`: The input string to be slugified.
+
+### `DownloadStaticFile`
+
+Downloads a file and tries to force the browser to avoid displaying it in the browser window by setting content disposition.
+
+```go
+func (t *Tools) DownloadStaticFile(w http.ResponseWriter, r *http.Request, p, file, displayName string)
+```
+
+- `w http.ResponseWriter`: The HTTP response writer.
+- `r *http.Request`: The HTTP request.
+- `p string`: The file path.
+- `file string`: The filename.
+- `displayName string`: The display name.
+
+### `ReadJSON`
+
+Reads and decodes JSON from a request body.
+
+```go
+func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error
+```
+
+- `w http.ResponseWriter`: The HTTP response writer.
+- `r *http.Request`: The HTTP request.
+- `data interface{}`: The target data structure.
+
+### `WriteJSON`
+
+Encodes data as JSON and writes it to the response.
+
+```go
+func (t *Tools) WriteJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error
+```
+
+- `w http.ResponseWriter`: The HTTP response writer.
+- `status int`: The HTTP status code.
+- `data interface{}`: The payload to be encoded as JSON.
+- `headers ...http.Header`: Optional headers.
+
+### `ErrorJSON`
+
+Generates and sends a JSON error response.
+
+```go
+func (t *Tools) ErrorJSON(w http.ResponseWriter, err error, status ...int) error
+```
+
+- `w http.ResponseWriter`: The HTTP response writer.
+- `err error`: The error to be included in the response.
+- `status ...int`: Optional HTTP status code.
+
+### `PushJSONToRemote`
+
+Sends the given data as a JSON payload to a specified URI via HTTP POST using an optional custom HTTP client.
+
+```go
+func (t *Tools) PushJSONToRemote(uri string, data interface{}, client ...*http.Client) (*http.Response, int, error)
+```
+
+- `uri string`: The target URI.
+- `data interface{}`: The data to be sent as JSON.
+- `client ...*http.Client`: Optional custom HTTP client.
 
 # MIT License
 
