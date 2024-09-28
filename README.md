@@ -15,7 +15,7 @@ The included tools are:
 - [X] Upload files via HTTP requests with optional renaming and file type validation.
 - [X] Download a static file
 - [X] Get a random string of length n
-- [ ] Post JSON to a remote service
+- [X] Post JSON to a remote service
 - [X] Create a directory, including all parent directories, if it does not already exist
 - [X] Create a URL safe slug from a string
 
