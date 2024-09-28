@@ -10,7 +10,7 @@ This toolkit package provides a set of utilities designed for the Go programming
 The included tools are:
 
 - [X] Read JSON
-- [ ] Write JSON
+- [X] Write JSON
 - [ ] Produce a JSON encoded error response
 - [X] Upload files via HTTP requests with optional renaming and file type validation.
 - [X] Download a static file
