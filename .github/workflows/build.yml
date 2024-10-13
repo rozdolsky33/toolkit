@@ -46,6 +46,11 @@ jobs:
       run: go test -race -vet=off ./...
 
     - name: Update coverage report
-      uses: ncruces/go-coverage-report@v0
+      uses: ncruces/go-coverage-report@v0.3.0
+      with:
+        report: true
+        chart: true
+        amend: true
       env:
         GITHUB_TOKEN: ${{ secrets.GH_REPORT_COV }}
+      continue-on-error: true
