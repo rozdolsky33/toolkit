@@ -9,7 +9,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -42,7 +41,7 @@ func TestTools_PushJSONToRemote(t *testing.T) {
 		// Test Request Parameters
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
+			Body:       io.NopCloser(bytes.NewBufferString("OK")), // fix
 			Header:     make(http.Header),
 		}
 	})
@@ -251,7 +250,7 @@ func TestTools_DownloadStaticFile(t *testing.T) {
 	if res.Header["Content-Disposition"][0] != "attachment; filename=\"puppy.jpg\"" {
 		t.Error("wrong content disposition of", res.Header["Content-Disposition"][0])
 	}
-	_, err := ioutil.ReadAll(res.Body)
+	_, err := io.ReadAll(res.Body) // fix
 
 	if err != nil {
 		t.Error(err)
