@@ -183,6 +183,7 @@ func (t *Tools) DownloadStaticFile(w http.ResponseWriter, r *http.Request, pathN
 	http.ServeFile(w, r, pathName)
 }
 
+// JSONResponse is the type used for sending JSON around.
 type JSONResponse struct {
 	Error   bool        `json:"error"`
 	Message string      `json:"message"`
