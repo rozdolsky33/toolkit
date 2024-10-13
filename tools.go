@@ -395,6 +395,9 @@ func (t *Tools) WriteXML(w http.ResponseWriter, status int, data interface{}, he
 	// Add the XML header
 	xmlOut := []byte(xml.Header + string(out))
 	_, err = w.Write(xmlOut)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

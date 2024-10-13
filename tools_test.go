@@ -203,7 +203,7 @@ func TestTools_CreateDirIfNotExist(t *testing.T) {
 		t.Error(err)
 	}
 
-	_ = os.Remove(fmt.Sprintf("./testdata/myDir"))
+	_ = os.Remove("./testdata/myDir")
 
 }
 
