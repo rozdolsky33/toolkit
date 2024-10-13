@@ -12,6 +12,9 @@ The included tools are:
 - [X] Read JSON
 - [X] Write JSON
 - [X] Produce a JSON encoded error response
+- [X] Write XML
+- [ ] Read XML
+- [ ] Produce XML encoded error response
 - [X] Upload files via HTTP requests with optional renaming and file type validation.
 - [X] Download a static file
 - [X] Get a random string of length n

@@ -29,6 +29,13 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 	}
 }
 
+func TestNew(t *testing.T) {
+	tools := New()
+	if tools.MaxXMLSize != defaultMaxUpload {
+		t.Errorf("Wrong MaxSize")
+	}
+}
+
 func TestTools_PushJSONToRemote(t *testing.T) {
 	client := NewTestClient(func(req *http.Request) *http.Response {
 		// Test Request Parameters
@@ -343,5 +350,48 @@ func TestTools_ErrorJSON(t *testing.T) {
 	}
 	if rr.Code != http.StatusServiceUnavailable {
 		t.Errorf("error code set to false in JSON, and it should be http.StatusServiceUnavailable")
+	}
+}
+
+var writeXMLTests = []struct {
+	name          string
+	payload       any
+	errorExpected bool
+}{
+	{
+		name: "valid",
+		payload: XMLResponse{
+			Error:   false,
+			Message: "foo",
+		},
+		errorExpected: false,
+	},
+	{
+		name:          "invalid",
+		payload:       make(chan int),
+		errorExpected: true,
+	},
+}
+
+func TestTools_WriteXML(t *testing.T) {
+
+	for _, e := range writeXMLTests {
+		// create a variable of type toolkit.Tools, and just use the defaults.
+		var testTools Tools
+
+		rr := httptest.NewRecorder()
+
+		header := make(http.Header)
+		header.Add("FOO", "BAR")
+		err := testTools.WriteXML(rr, http.StatusOK, e.payload, header)
+
+		if err != nil && !e.errorExpected {
+			t.Errorf("%s, failed to write XML: %v", e.name, err)
+		}
+
+		if err == nil && e.errorExpected {
+			t.Errorf("%s: error expected, but none reived", e.name)
+		}
+
 	}
 }

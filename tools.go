@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -18,12 +20,47 @@ import (
 // randomStringSource defines the character set used for generating random strings.
 const randomStringSource = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXWYZ0123456789_+"
 
+// defaultMaxUpload the default max upload size (10 mb)
+const defaultMaxUpload = 10485760
+
 // Tools is the type used to instantiate this module. Any variable of this type will have access to all the methods with the receiver *Tools.
 type Tools struct {
-	MaxFileSize        int
-	AllowedFileTypes   []string
-	MaxJSONSize        int
-	AllowUnknownFields bool
+	MaxJSONSize        int         // maximum size of JSON file we'll process
+	MaxXMLSize         int         // maximum size of XML file we'll process
+	MaxFileSize        int         // maximum size of uploaded files in bytes
+	AllowedFileTypes   []string    // allowed file types for upload (e.g. image/jpeg)
+	AllowUnknownFields bool        // if set to true, allow unknown fields in JSON
+	ErrorLog           *log.Logger // the info log.
+	InfoLog            *log.Logger // the error log.
+}
+
+type JSONResponse struct {
+	Error   bool        `json:"error"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+type XMLResponse struct {
+	Error   bool        `xml:"error"`
+	Message string      `xml:"message"`
+	Data    interface{} `xml:"data,omitempty"`
+}
+
+// UploadedFile is a struct used to save information about an uploaded file
+type UploadedFile struct {
+	NewFileName      string
+	OriginalFileName string
+	FileSize         int64
+}
+
+func New() Tools {
+	return Tools{
+		MaxJSONSize: defaultMaxUpload,
+		MaxXMLSize:  defaultMaxUpload,
+		MaxFileSize: defaultMaxUpload,
+		InfoLog:     log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime),
+		ErrorLog:    log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
+	}
 }
 
 // RandomString returns a string of random characters of length n, using randomStringSource as the source for the string
@@ -35,13 +72,6 @@ func (t *Tools) RandomString(n int) string {
 		s[i] = r[x%y]
 	}
 	return string(s)
-}
-
-// UploadedFile is a struct used to save information about an uploaded file
-type UploadedFile struct {
-	NewFileName      string
-	OriginalFileName string
-	FileSize         int64
 }
 
 // UploadOneFile uploads a single file from the provided HTTP request, storing it in the specified directory.
@@ -186,20 +216,23 @@ func (t *Tools) DownloadStaticFile(w http.ResponseWriter, r *http.Request, p, fi
 
 }
 
-type JSONResponse struct {
-	Error   bool        `json:"error"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-}
-
 // ReadJSON tries to read the body of a request and coverts from json into a go dta variable
 func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
-	maxBytes := 1024 * 1024 // 1MB
 
+	if r.Header.Get("Content-Type") != "" {
+		contentType := r.Header.Get("Content-Type")
+		if strings.ToLower(contentType) != "application/json" {
+			return errors.New("Content-Type must be application/json")
+		}
+	}
+
+	// Set a sensible default for the maximum payload size.
+	maxBytes := defaultMaxUpload
+
+	// If MaxJSONSize is set, use the value instead of default.
 	if t.MaxJSONSize != 0 {
 		maxBytes = t.MaxJSONSize
 	}
-
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
 	dec := json.NewDecoder(r.Body)
@@ -208,6 +241,7 @@ func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data interface{
 		dec.DisallowUnknownFields()
 	}
 
+	// Attempt to decode the data, and figure out what the error is, if any, to send back a human-readable response
 	err := dec.Decode(data)
 	if err != nil {
 		var syntaxError *json.SyntaxError
@@ -253,12 +287,14 @@ func (t *Tools) WriteJSON(w http.ResponseWriter, status int, data interface{}, h
 		return err
 	}
 
+	// if we have a value as the last parameter in the function call, then we are setting a custom header.
 	if len(headers) > 0 {
 		for key, val := range headers[0] {
 			w.Header()[key] = val
 		}
 	}
 
+	// Set the content type and send response.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err = w.Write(out)
@@ -268,14 +304,16 @@ func (t *Tools) WriteJSON(w http.ResponseWriter, status int, data interface{}, h
 	return nil
 }
 
-// ErrorJSON takes an error, and optionally a status code, and generates / sends a JSON error message
+// ErrorJSON takes an error, and optionally a status code, and generates and sends a JSON error message
 func (t *Tools) ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 
+	// if a custom response code is specified, use that instead of bad request.
 	if len(status) > 0 {
 		statusCode = status[0]
 	}
 
+	// build JSON Payload.
 	var payload JSONResponse
 	payload.Error = true
 	payload.Message = err.Error()
@@ -285,31 +323,57 @@ func (t *Tools) ErrorJSON(w http.ResponseWriter, err error, status ...int) error
 
 // PushJSONToRemote sends the given data as a JSON payload to the specified URI via HTTP POST using an optional custom HTTP client.
 func (t *Tools) PushJSONToRemote(uri string, data interface{}, client ...*http.Client) (*http.Response, int, error) {
-	// create json
+	// Create json
 	jsonData, err := json.Marshal(data)
+
 	if err != nil {
 		return nil, 0, err
 	}
-	// check for custom http client
+	// Check for custom http client
 	httpClient := &http.Client{}
 	if len(client) > 0 {
 		httpClient = client[0]
 	}
 
-	//build the request and set the header
+	// Build the request and set the header
 	request, err := http.NewRequest(http.MethodPost, uri, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, 0, err
 	}
 	request.Header.Set("Content-Type", "application/json")
 
-	//call the remote uri
+	// Call the remote uri
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer response.Body.Close()
 
-	// send response back
+	// Send response back
 	return response, response.StatusCode, nil
+}
+
+// WriteXML takes a response status code and arbitrary data and writes an XML response to the client.
+// The Content-Type header is set to application/xml
+func (t *Tools) WriteXML(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
+	out, err := xml.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	// If we have value as the last parameter in the function call, then we are setting a custom header.
+	if len(headers) > 0 {
+		for key, val := range headers[0] {
+			w.Header()[key] = val
+		}
+	}
+	// Set the content type and send response. According the RFC 7303, txt/xml and application/xml are to be treated as the same, so we'll just pick one.
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(status)
+
+	// Add the XML header
+	xmlOut := []byte(xml.Header + string(out))
+	_, err = w.Write(xmlOut)
+
+	return nil
 }
