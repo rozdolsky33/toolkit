@@ -10,9 +10,15 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_REPORT_COV }}
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latesti
+    permissions:
+      contents: read
+      packages: write
     steps:
     - uses: actions/checkout@v4
 
