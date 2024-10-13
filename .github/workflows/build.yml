@@ -42,10 +42,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GH_WIKI_TOKEN }}
 
     - name: Update coverage report
-      uses: ncruces/go-coverage-report@main
-      with:
-        report: true
-        chart: true
-        amend: true
+      uses: ncruces/go-coverage-report@v0
       env:
         GITHUB_TOKEN: ${{ secrets.GH_WIKI_TOKEN }}
