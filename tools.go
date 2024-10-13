@@ -23,7 +23,8 @@ const randomStringSource = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXWYZ
 // defaultMaxUpload the default max upload size (10 mb)
 const defaultMaxUpload = 10485760
 
-// Tools is the type used to instantiate this module. Any variable of this type will have access to all the methods with the receiver *Tools.
+// Tools is the type used to instantiate this module. Any variable of this type will have access
+// to all the methods with the receiver *Tools.
 type Tools struct {
 	MaxJSONSize        int         // maximum size of JSON file we'll process
 	MaxXMLSize         int         // maximum size of XML file we'll process
@@ -34,12 +35,14 @@ type Tools struct {
 	InfoLog            *log.Logger // the error log.
 }
 
+// JSONResponse is the type used for sending JSON around.
 type JSONResponse struct {
 	Error   bool        `json:"error"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
+// XMLResponse is the type used for sending XML around.
 type XMLResponse struct {
 	Error   bool        `xml:"error"`
 	Message string      `xml:"message"`
@@ -53,6 +56,7 @@ type UploadedFile struct {
 	FileSize         int64
 }
 
+// New returns a new toolbox with sensible defaults.
 func New() Tools {
 	return Tools{
 		MaxJSONSize: defaultMaxUpload,
@@ -91,8 +95,10 @@ func (t *Tools) UploadOneFile(r *http.Request, uploadDir string, rename ...bool)
 	return files[0], nil
 }
 
-// UploadFiles uploads multiple files from the provided HTTP request, storing them in the specified directory.
-// If the optional rename argument is true or not provided, the files will be renamed.
+// UploadFiles uploads one or more file to a specified directory, and gives the files a random name.
+// It returns a slice containing the newly named files, the original file names, the size of the files,
+// and potentially an error. If the optional last parameter is set to true, then we will not rename
+// the files, but will use the original file names.
 func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) ([]*UploadedFile, error) {
 	renameFile := true
 	if len(rename) > 0 {
@@ -216,9 +222,12 @@ func (t *Tools) DownloadStaticFile(w http.ResponseWriter, r *http.Request, p, fi
 
 }
 
-// ReadJSON tries to read the body of a request and coverts from json into a go dta variable
+// ReadJSON tries to read the body of a request and converts it from JSON to a variable. The third parameter, data,
+// is expected to be a pointer, so that we can read data into it.
 func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 
+	// Check content-type header; it should be application/json. If it's not specified,
+	// try to decode the body anyway.
 	if r.Header.Get("Content-Type") != "" {
 		contentType := r.Header.Get("Content-Type")
 		if strings.ToLower(contentType) != "application/json" {
@@ -251,32 +260,39 @@ func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data interface{
 		switch {
 		case errors.As(err, &syntaxError):
 			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			return errors.New("body contains badly-formed JSON")
+
 		case errors.As(err, &unmarshalTypeError):
 			if unmarshalTypeError.Field != "" {
 				return fmt.Errorf("body contains icnorrect JSON type for field %q", unmarshalTypeError.Field)
 			}
 			return fmt.Errorf("body contains an invalid JSON (at character %d)", unmarshalTypeError.Offset)
+
 		case errors.Is(err, io.EOF):
 			return errors.New("body must not be empty")
+
 		case strings.HasPrefix(err.Error(), "json: unknown field"):
 			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field")
 			return fmt.Errorf("body contains unknown key %s", fieldName)
+
 		case err.Error() == "http: request body too large":
 			return fmt.Errorf("body must not be larger than %d bytes", maxBytes)
+
 		case errors.As(err, &invalidUnmarshalError):
 			return fmt.Errorf("error unmarshalling JSON: %s", err.Error())
+
 		default:
 			return err
 		}
 	}
 
 	err = dec.Decode(&struct{}{})
-
 	if err != io.EOF {
 		return errors.New("body must contain only one JSON value")
 	}
+
 	return nil
 }
 
@@ -298,9 +314,11 @@ func (t *Tools) WriteJSON(w http.ResponseWriter, status int, data interface{}, h
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err = w.Write(out)
+
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -321,7 +339,10 @@ func (t *Tools) ErrorJSON(w http.ResponseWriter, err error, status ...int) error
 	return t.WriteJSON(w, statusCode, payload)
 }
 
-// PushJSONToRemote sends the given data as a JSON payload to the specified URI via HTTP POST using an optional custom HTTP client.
+// PushJSONToRemote posts arbitrary json to some url, and returns the response, the response
+// status code, and error, if any. The final parameter, client, is optional, and will default
+// to the standard http.Client. It exists to make testing possible without an active remote
+// url.
 func (t *Tools) PushJSONToRemote(uri string, data interface{}, client ...*http.Client) (*http.Response, int, error) {
 	// Create json
 	jsonData, err := json.Marshal(data)
@@ -376,4 +397,47 @@ func (t *Tools) WriteXML(w http.ResponseWriter, status int, data interface{}, he
 	_, err = w.Write(xmlOut)
 
 	return nil
+}
+
+// ReadXML tries to read the body of an XML request into a variable. The third parameter, data, is expected be a pointer, so we can read data into it.
+func (t *Tools) ReadXML(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	maxBytes := defaultMaxUpload
+
+	// If MaxXMLSize is set, use that value instead of default
+	if t.MaxXMLSize != 0 {
+		maxBytes = t.MaxXMLSize
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+
+	dec := xml.NewDecoder(r.Body)
+
+	// Attempt to decode the data.
+	err := dec.Decode(data)
+	if err != nil {
+		return err
+	}
+
+	err = dec.Decode(&struct{}{})
+	if err != io.EOF {
+		return errors.New("body must contain only one XML value")
+	}
+	return nil
+}
+
+// ErrorXML takes and error, and optionally a response status code, and generates adn sends an XML error response.
+
+func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error {
+	statusCode := http.StatusBadRequest
+
+	// If a custom response code is specified, use that instead of bad request.
+	if len(status) > 0 {
+		statusCode = status[0]
+	}
+
+	var payload XMLResponse
+	payload.Error = true
+	payload.Message = err.Error()
+
+	return t.WriteXML(w, statusCode, payload)
 }

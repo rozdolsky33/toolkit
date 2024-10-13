@@ -1,7 +1,16 @@
 # Toolkit Package
 
-[![CI Build](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml/badge.svg)](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml)
-[![Coverage Status](https://coveralls.io/repos/github/rozdolsky33/toolkit/badge.svg?branch=main)](https://coveralls.io/github/rozdolsky33/toolkit?branch=main)
+[//]: # ([![CI Build]&#40;https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml/badge.svg&#41;]&#40;https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml&#41;)
+
+[//]: # ([![Coverage Status]&#40;https://coveralls.io/repos/github/rozdolsky33/toolkit/badge.svg?branch=main&#41;]&#40;https://coveralls.io/github/rozdolsky33/toolkit?branch=main&#41;)
+
+[![Version](https://img.shields.io/badge/goversion-1.23.x-blue.svg)](https://golang.org)
+<a href="https://golang.org"><img src="https://img.shields.io/badge/powered_by-Go-3362c2.svg?style=flat-square" alt="Built with GoLang"></a>
+[![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/rozdolsky33/toolkit/main/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rozdolsky33/toolkit)](https://goreportcard.com/report/github.com/rozdolsky33/toolkit)
+![Tests](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml/badge.svg)
+<a href="https://pkg.go.dev/github.com/tsawler/toolbox"><img src="https://img.shields.io/badge/godoc-reference-%23007d9c.svg"></a>
+[![Go Coverage](https://github.com/rozdolsky33/toolkit/wiki/coverage.svg)](https://raw.githack.com/wiki/rozdolsky33/toolkit/coverage.html)
 
 This toolkit package provides a set of utilities designed for the Go programming language to handle common tasks like generating random strings and handling file uploads in web applications.
 
@@ -13,8 +22,8 @@ The included tools are:
 - [X] Write JSON
 - [X] Produce a JSON encoded error response
 - [X] Write XML
-- [ ] Read XML
-- [ ] Produce XML encoded error response
+- [X] Read XML
+- [X] Produce XML encoded error response
 - [X] Upload files via HTTP requests with optional renaming and file type validation.
 - [X] Download a static file
 - [X] Get a random string of length n

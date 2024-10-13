@@ -3,6 +3,7 @@ package toolkit
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"image"
@@ -393,5 +394,93 @@ func TestTools_WriteXML(t *testing.T) {
 			t.Errorf("%s: error expected, but none reived", e.name)
 		}
 
+	}
+}
+
+var xmlTests = []struct {
+	name          string
+	xml           string
+	maxBytes      int
+	errorExpected bool
+}{
+	{
+		name:          "Good XML",
+		xml:           `<?xml version="1.0" encoding="UTF-8"?><note><to>John Smith</to><from>Jane Jones</from></note>`,
+		errorExpected: false,
+	},
+	{
+		name:          "Badly formated XML",
+		xml:           `<?xml version="1.0" encoding="UTF-8"?><note><xx>John Smith</to><from>Jane Jones</from></note>`,
+		errorExpected: true,
+	},
+	{
+		name:          "Too Big Size",
+		xml:           `<?xml version="1.0" encoding="UTF-8"?><note><to>John Smith</to><from>Jane Jones</from></note>`,
+		maxBytes:      10,
+		errorExpected: true,
+	},
+	{
+		name: "Double XML",
+		xml: `<?xml version="1.0" encoding="UTF-8"?><note><to>John Smith</to><from>Jane Jones</from></note>
+						<?xml version="1.0" encoding="UTF-8"?><note><to>Luke Skywalker</to><from>R2D2</from></note>`,
+		errorExpected: true,
+	},
+}
+
+func TestTools_ReadXML(t *testing.T) {
+	for _, e := range xmlTests {
+
+		var tools Tools
+
+		if e.maxBytes != 0 {
+			tools.MaxXMLSize = e.maxBytes
+		}
+
+		// create a request with the body.
+		req, err := http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(e.xml)))
+		if err != nil {
+			t.Log("Error:", err)
+		}
+
+		// create a test response recorder, which satisfies the requirements for a ResponseWriter.
+		rr := httptest.NewRecorder()
+
+		// call ReadXML and check for an error
+		var note struct {
+			To   string `xml:"to"`
+			From string `xml:"from"`
+		}
+
+		err = tools.ReadXML(rr, req, &note)
+		if e.errorExpected && err == nil {
+			t.Errorf("%s: error expected, but none reived", e.name)
+		} else if !e.errorExpected && err != nil {
+			t.Errorf("%s: error not expected but one received", e.name)
+		}
+	}
+}
+
+func TestTools_ErrorXML(t *testing.T) {
+	var testTools Tools
+
+	rr := httptest.NewRecorder()
+	err := testTools.ErrorXML(rr, errors.New("some error"), http.StatusServiceUnavailable)
+	if err != nil {
+		t.Errorf("failed to write XML: %v", err)
+	}
+
+	var requestPayload XMLResponse
+	decoder := xml.NewDecoder(rr.Body)
+	err = decoder.Decode(&requestPayload)
+	if err != nil {
+		t.Errorf("failed to read XML: %v", err)
+	}
+
+	if !requestPayload.Error {
+		t.Errorf("error set to false in XML, and it should be true")
+	}
+
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Errorf("wrong status code returned; expected 503, but got %d", rr.Code)
 	}
 }
