@@ -38,10 +38,8 @@ jobs:
 
     - name: Run tests
       run: go test -race -vet=off ./...
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_WIKI_TOKEN }}
 
     - name: Update coverage report
       uses: ncruces/go-coverage-report@v0
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_WIKI_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_REPORT_COV }}
