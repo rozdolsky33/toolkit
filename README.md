@@ -9,7 +9,7 @@
 [![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/rozdolsky33/toolkit/main/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rozdolsky33/toolkit)](https://goreportcard.com/report/github.com/rozdolsky33/toolkit)
 ![Tests](https://github.com/rozdolsky33/toolkit/actions/workflows/build.yml/badge.svg)
-<a href="https://pkg.go.dev/github.com/tsawler/toolbox"><img src="https://img.shields.io/badge/godoc-reference-%23007d9c.svg"></a>
+<a href="https://pkg.go.dev/github.com/rozdolsky33/toolkit"><img src="https://img.shields.io/badge/godoc-reference-%23007d9c.svg"></a>
 [![Go Coverage](https://github.com/rozdolsky33/toolkit/wiki/coverage.svg)](https://raw.githack.com/wiki/rozdolsky33/toolkit/coverage.html)
 
 This toolkit package provides a set of utilities designed for the Go programming language to handle common tasks like generating random strings and handling file uploads in web applications.
